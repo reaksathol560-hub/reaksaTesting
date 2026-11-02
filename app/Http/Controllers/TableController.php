@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\RestaurantTable;
 use Illuminate\Http\Request;
 
 class TableController extends Controller
@@ -9,9 +9,29 @@ class TableController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $search = $request->input('search');
+
+        $sortBy = $request->query('sortBy', 'id');
+
+        $sortDir = $request->query('sortDir','asc' );
+
+        // limit data
+        $limit = $request->query('limit',10);
+
+    
+        $table = RestaurantTable::When($search, function($query , $search){
+            $query->where('table_number','like',"% {$search}%");
+        } )
+
+        ->orderBy($sortBy, $sortDir)
+
+        ->paginate($limit);
+
+        return $table;
+
+
     }
 
     /**
@@ -27,7 +47,14 @@ class TableController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validate = $request->validate([
+            'table_number' => 'required|integer|max:255',
+            'capacity'     => 'nullable|integer|max:255',
+            'status'       => 'nullable|string|max:255',
+        ]);
+
+        $table = RestaurantTable::create($validate);
+        return $table;
     }
 
     /**
@@ -51,7 +78,15 @@ class TableController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $validate = $request->validate([
+            'table_number' => 'required|integer|max:255',
+            'capacity'     => 'nullable|integer|max:255',
+            'status'       => 'nullable|string|max:255',
+        ]);
+
+        $table = RestaurantTable::findOrFail($id);
+        $table -> update($validate);
+        return $table;
     }
 
     /**
@@ -59,6 +94,6 @@ class TableController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $table = RestaurantTable::findOrFail($id)->delete();
     }
 }
